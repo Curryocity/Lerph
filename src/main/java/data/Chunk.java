@@ -14,7 +14,6 @@ import java.util.*;
 
 import static block.BlockLoader.*;
 import static core.Game.BLOCK_SCALE;
-import static core.Game.GAME_SCALE;
 
 public class Chunk {
 
@@ -36,7 +35,7 @@ public class Chunk {
             new ArrayList<>()
     };
 
-    private boolean shouldSave = true, isMapEmpty = true, isLoaded = false, shouldRegenMesh = true;
+    private boolean modified = true, isMapEmpty = true, isLoaded = false, shouldRegenMesh = true;
 
     private final List<Entity> entities = new ArrayList<>(); // actual entities could move around, cross chunk borders
     private final List<Entity> deadEntities = new ArrayList<>();
@@ -170,7 +169,7 @@ public class Chunk {
 
         System.out.println("blockMap deserialized: "+ Arrays.toString(blockMap));
 
-        shouldSave = false;
+        modified = false;
 
     }
 
@@ -297,9 +296,9 @@ public class Chunk {
     }
 
     public byte[] getChunkData(){
-        if(shouldSave){
+        if(modified){
             serialize();
-            shouldSave = false;
+            modified = false;
         }
         return rawData;
     }
@@ -315,6 +314,10 @@ public class Chunk {
         isLoaded = true;
         shouldRegenMesh = true;
 
+    }
+
+    public void setModified(){
+        modified = true;
     }
 
     public boolean isMapEmpty(){
@@ -458,7 +461,7 @@ public class Chunk {
     void edit(int blockID, int xPos, int yPos){
         if(xPos >= blocksPerAxis || yPos >= blocksPerAxis || xPos < 0 || yPos < 0) throw new IllegalArgumentException("sub-chunk coordinate out of bound");
         blockMap[yPos * blocksPerAxis + xPos] = (byte) blockID;
-        shouldSave = true;
+        modified = true;
         shouldRegenMesh = true;
     }
 
@@ -472,7 +475,7 @@ public class Chunk {
                 blockMap[y * blocksPerAxis + x] = (byte) blockID;
             }
         }
-        shouldSave = true;
+        modified = true;
         shouldRegenMesh = true;
     }
 
@@ -482,11 +485,17 @@ public class Chunk {
 
         System.out.println("Entity placed: " + entityID + " at " + xPos + " " + yPos + " in " + chunkX + " " + chunkY);
         Entity entity = Entity.newEntity(entityID);
+
+        if(entity == null) {
+            System.out.println("Exception: you cannot place null entity");
+            return;
+        }
+
         entity.init(spaceLocation, chunkX * blocksPerAxis + xPos + 0.5, chunkY * blocksPerAxis + yPos + 0.5, 0);
         entity.respawn();
         summon(entity);
 
-        shouldSave = true;
+        modified = true;
     }
 
     private final int[] quadrantAddX = {0, blocksPerAxis/2, 0, blocksPerAxis/2};
@@ -518,6 +527,8 @@ public class Chunk {
     }
 
     void serializeEntities(){
+        System.out.println("serialize entities");
+
         // Clear existing entityInitData
         for (int i = 0; i < 4; i++) {
             entityInitData[i].clear();
@@ -563,13 +574,13 @@ public class Chunk {
         return entitiesAt;
     }
 
-    // no killing entity in level editor
+    // instead of killing entity in level editor
     public boolean removeEntity(Entity entity){
         boolean successRemove = entities.remove(entity);
         if(successRemove){
             entity.isAlive = false;
             entity.setShown(false);
-            shouldSave = true;
+            modified = true;
         }
         return successRemove;
     }
@@ -640,6 +651,7 @@ public class Chunk {
             System.out.println("Warning: Trying to move an non-existing entity");
             return;
         }
+
         to.entities.add(entity);
     }
 

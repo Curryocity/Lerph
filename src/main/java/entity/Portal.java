@@ -12,6 +12,7 @@ import static entity.EntityLoader.getEntitySheet;
 public class Portal extends Entity {
 
     public static final String name = "portal";
+    private int linkedID = -1;
     AdvPacket portalPack;
     AdvPacket shadowPack;
 
@@ -23,7 +24,6 @@ public class Portal extends Entity {
         shadowPack = new AdvPacket(shadowSprite, baseZDepth);
         hitBox = new SimpleBox(0.5, 0.5);
 
-
         relativeYRep = -0.125f;
     }
 
@@ -34,7 +34,6 @@ public class Portal extends Entity {
 
     @Override
     public void frame(float alpha) {
-
         syncFramePosition();
         yRepStuff();
         portalPack.setPos(frameX, frameY + frameZ * Game.cosineViewAngle);
@@ -73,6 +72,12 @@ public class Portal extends Entity {
     public void respawn() {
         super.respawn();
         z = 0.4;
+    }
+
+    @Override
+    public void changeState(int state) {
+        super.changeState(state);
+        System.out.println("override change state");
     }
 
     public static Sprite portalSprite;

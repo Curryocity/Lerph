@@ -502,7 +502,8 @@ public class Player extends Entity{
             shadow.setTransparency(1f);
             shadow.zDepth = baseZDepth;
         }else {
-            if(frameZ >= 0 && !collisionBody.isInFluid()) {
+            boolean inFluid = collisionBody.isInFluid();
+            if(frameZ >= 0 && !inFluid) {
                 shadow.zDepth = baseZDepth;
                 shadow.setTransparency(0.5f);
             }else {

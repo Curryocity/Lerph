@@ -92,15 +92,15 @@ public class EditorScene extends Scene{
     @Override
     public void update(float alpha) {
 
-        if(playQueue){
-            play();
-        }
-
         if(KeyInput.useQueue(InputType.PAUSE)){
             switchScene(new TitleScene());
         }
 
         if(currentSpace() != null){
+
+            if(playQueue){
+                play();
+            }
 
             mouseX = (int) Math.floor(MouseInput.getMouseWorldCoords().x);
             mouseY = (int) Math.floor(MouseInput.getMouseWorldCoords().y);
@@ -121,7 +121,9 @@ public class EditorScene extends Scene{
 
     boolean playQueue = false;
     private void play(){
-        Game.switchScene(new InGameScene(map), true);
+        settingMode = NONE;
+        playQueue = false;
+        Game.switchScene(new InGameScene(map), false);
     }
 
 
@@ -261,6 +263,12 @@ public class EditorScene extends Scene{
             selectedBox.hide();
         }
 
+        if(KeyInput.useQueue(GLFW.GLFW_KEY_T)){
+            if(mouseOnValidChunks()){
+                currentSpace().moveEntity(theSelectedEntity, mouseX + 0.5, mouseY + 0.5, true);
+                currentSpace().setModified();
+            }
+        }
 
     }
 

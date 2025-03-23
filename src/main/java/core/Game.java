@@ -2,7 +2,6 @@ package core;
 
 import block.BlockLoader;
 import component.AdvPacket;
-import component.Sprite;
 import data.Map;
 import entity.EntityLoader;
 import entity.Player;

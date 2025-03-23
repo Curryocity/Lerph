@@ -30,14 +30,14 @@ public abstract class Entity {
         this.spaceLocation = spaceLocation;
         this.initX = x;
         this.initY = y;
-        this.initState = state;
+        changeState(state);
     }
 
     public void respawn(){
         isAlive = true;
         x = initX; y = initY; z = 0;
         vx = 0; vy = 0; vz = 0;
-        setState(initState);
+        changeState(initState);
     }
 
 
@@ -87,7 +87,10 @@ public abstract class Entity {
         initX = x;
         initY = y;
     }
-    public void setState(int state){}
+
+    public void changeState(int state){
+        initState = state;
+    }
 
     public static Entity newEntity(int entityID){
         return switch (entityID) {

@@ -117,6 +117,7 @@ public class Space {
         boolean versionChanged = versionInt != this.version;
 
         if(!modified && !versionChanged) return;
+        System.out.println("SAVING SPACE!!!!");
         try (DataOutputStream dos = new DataOutputStream(
                 new BufferedOutputStream(new FileOutputStream(filePath)))) {
 
@@ -263,6 +264,41 @@ public class Space {
         double localX = x - chunkX * Chunk.blocksPerAxis;
         double localY = y - chunkY * Chunk.blocksPerAxis;
         return getChunk(chunkX, chunkY).getEntitiesAt(localX, localY);
+    }
+
+    public void moveEntity(Entity entity, double newX, double newY){
+        moveEntity(entity, newX, newY, false);
+    }
+
+    public void moveEntity(Entity entity, double newX, double newY, boolean shouldModify){
+        int originalChunkX = getChunkCoord(entity.x);
+        int originalChunkY = getChunkCoord(entity.y);
+
+        int newChunkX = getChunkCoord(newX);
+        int newChunkY = getChunkCoord(newY);
+
+        boolean crossChunk = newChunkX != originalChunkX || newChunkY != originalChunkY;
+        // entities belongs to the last valid chunk it was on, if it enters the outerSpace
+        if(newChunkX >= chunkLengthX || newChunkY >= chunkLengthY || newChunkX < 0 || newChunkY < 0)
+            crossChunk = false;
+
+        Chunk originalChunk = getChunk(originalChunkX, originalChunkY);
+        Chunk newChunk = getChunk(newChunkX, newChunkY);
+        if(crossChunk)
+            Chunk.entityCrossChunk(entity, originalChunk, newChunk);
+
+        entity.x = newX;
+        entity.y = newY;
+
+        if(shouldModify) {
+            entity.initX = newX;
+            entity.initY = newY;
+            originalChunk.setModified();
+            newChunk.setModified();
+            setModified();
+            System.out.println(entity.initX + " " + entity.initY);
+        }
+
     }
 
     public void summon(Entity entity, double x, double y){
