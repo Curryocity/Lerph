@@ -1,6 +1,5 @@
 package scene;
 
-import component.AdvPacket;
 import component.Line;
 import core.Game;
 import data.Map;
@@ -8,6 +7,7 @@ import manager.InputBind;
 import manager.KeyInput;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
+import ui.MapCreationMenu;
 import ui_basic.AdvText;
 import ui_basic.Panel;
 import ui_basic.Text;
@@ -35,6 +35,7 @@ public class MapSelectionScene extends Scene{
     AdvText prevPage = new AdvText("<") , nextPage = new AdvText(">");
     AdvText createNewMap = new AdvText("+ Map");
 
+    MapCreationMenu mapCreationMenu = new MapCreationMenu(this);
 
     public List<String> existMapNames = new ArrayList<>();
     private int page = 1, totalPages = 1;
@@ -61,115 +62,85 @@ public class MapSelectionScene extends Scene{
 
         bgPanel.setZDepth(20f);
 
-        initWorldCreationPopup();
+        bgPanel.addComponent(mapCreationMenu, new Vector4f(0, 0, 0.47f, 0.47f));
 
         refresh();
     }
 
-    Panel mapCreatePopupPanel = new Panel();
-    AdvPacket popupGreyOut = new AdvPacket(0.5f, 0.5f, 0.5f, 0.6f , 30f, false);
-    public void initWorldCreationPopup(){
-        bgPanel.addComponent(mapCreatePopupPanel, new Vector4f(0, 0, 0.47f, 0.47f), false);
-        bgPanel.addComponent(popupGreyOut, new Vector4f(0, 0, 1f, 1f), false);
 
-        popupCancel.setFrameInfo(3, 1f, UPPER, true, white, null);
-        popupCreate.setFrameInfo(3, 1f, UPPER, true, white, null);
-
-        mapCreatePopupPanel.addComponent(popupFrame, new Vector4f(0, 0, 1, 1));
-        mapCreatePopupPanel.addComponent(popupTitle, new Vector4f(0f, 0.7f, 0.1f ,0.1f));
-        mapCreatePopupPanel.addComponent(popupCancel, new Vector4f(-50, -0.85f, 0.08f ,0.08f));
-        mapCreatePopupPanel.addComponent(popupCreate, new Vector4f(50, -0.85f, 0.08f ,0.08f));
-        mapCreatePopupPanel.addComponent(inputTextUnderLine, new Vector4f(0, -0.1f, 0.45f ,0f));
-
-        mapCreatePopupPanel.setZDepth(40f);
-
-        popupFrame.setZDepth(39f);
-    }
 
     @Override
     public void refresh() {
         super.refresh();
         bgPanel.show();
-        popupGreyOut.hide();
-        mapCreatePopupPanel.hide();
+        if(!isCreatingMap){
+            mapCreationMenu.hide();
+        }
+
         refreshPage();
         handleResize();
     }
 
     final Vector4f gold = new Vector4f(1f, 0.85f, 0.55f, 1f);
-    boolean isCreatingMap = false;
+    public boolean isCreatingMap = false;
     @Override
     public void update(float alpha) {
 
         if(isCreatingMap){
-            worldCreatePopup();
-        }else {
+            mapCreationMenu.update();
+            renderSystem.render(alpha);
+            return;
+        }
 
-            bgPanel.update();
+        bgPanel.update();
 
-            if (goBack.useQueue(GLFW.GLFW_MOUSE_BUTTON_LEFT) || KeyInput.useQueue(InputBind.InputType.PAUSE)) {
-                switchScene(previousScene);
+        if (goBack.useQueue(GLFW.GLFW_MOUSE_BUTTON_LEFT) || KeyInput.useQueue(InputBind.InputType.PAUSE)) {
+            switchScene(previousScene);
+        }
+
+        for (int i = 0; i < mapPreviews.length; i++) {
+            if (mapPreviews[i] == null) break;
+
+            VisualBox frame = (VisualBox) mapPreviews[i].getComponent("frame");
+
+            if (frame.isHovered(true)) {
+                frame.setEdgeColor(gold);
+                frame.setThickness(8);
+            } else {
+                frame.setEdgeColor(white);
+                frame.setThickness(4);
             }
 
-            for (int i = 0; i < mapPreviews.length; i++) {
-                if (mapPreviews[i] == null) break;
-
-                VisualBox frame = (VisualBox) mapPreviews[i].getComponent("frame");
-
-                if (frame.isHovered(true)) {
-                    frame.setEdgeColor(gold);
-                    frame.setThickness(8);
-                } else {
-                    frame.setEdgeColor(white);
-                    frame.setThickness(4);
-                }
-
-                if (frame.useQueue(GLFW.GLFW_MOUSE_BUTTON_LEFT, true)) {
-                    Map loadedMap = Map.load(existMapNames.get((page - 1) * 4 + i));
-                    Game.switchScene(new InGameScene(loadedMap), true);
-                }
-
+            if (frame.useQueue(GLFW.GLFW_MOUSE_BUTTON_LEFT, true)) {
+                Map loadedMap = Map.load(existMapNames.get((page - 1) * 4 + i));
+                Game.switchScene(new InGameScene(loadedMap), true);
             }
 
-            if (page > 1) {
-                if (prevPage.useQueue(LMB)) {
-                    page--;
-                    refreshPage();
-                }
-            }
+        }
 
-            if (page < totalPages) {
-                if (nextPage.useQueue(LMB)) {
-                    page++;
-                    refreshPage();
-                }
-            }
-
-            if (createNewMap.useQueue(LMB)) {
-                isCreatingMap = true;
-                popupGreyOut.show();
-                mapCreatePopupPanel.show();
-                mapCreatePopupPanel.refresh();
+        if (page > 1) {
+            if (prevPage.useQueue(LMB)) {
+                page--;
+                refreshPage();
             }
         }
+
+        if (page < totalPages) {
+            if (nextPage.useQueue(LMB)) {
+                page++;
+                refreshPage();
+            }
+        }
+
+        if (createNewMap.useQueue(LMB)) {
+            isCreatingMap = true;
+            mapCreationMenu.show();
+        }
+
 
         renderSystem.render(alpha);
     }
 
-
-    VisualBox popupFrame = new VisualBox(1,1,5,1, white, new Vector4f(0.5f,0.4f,0.6f,1f));
-    Text popupTitle = new Text("Create New Map");
-    AdvText popupCancel = new AdvText("Cancel");
-    AdvText popupCreate = new AdvText("Create");
-    Line inputTextUnderLine = new Line(new Vector4f(0,0,1,0), white, 0.1f, 3f);
-    private void worldCreatePopup() {
-        mapCreatePopupPanel.update();
-        if(popupCancel.useQueue(GLFW.GLFW_MOUSE_BUTTON_LEFT)){
-            isCreatingMap = false;
-            popupGreyOut.hide();
-            mapCreatePopupPanel.hide();
-        }
-    }
 
     public Panel generatePreviewPanel(String mapName) {
         Panel panel = new Panel();
@@ -219,9 +190,7 @@ public class MapSelectionScene extends Scene{
     public void handleResize() {
         super.handleResize();
         bgPanel.refresh();
-        if(isCreatingMap){
-            mapCreatePopupPanel.refresh();
-        }
+        mapCreationMenu.handleResize();
     }
 
 }
