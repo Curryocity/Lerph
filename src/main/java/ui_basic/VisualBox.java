@@ -52,12 +52,11 @@ public class VisualBox extends SimpleBox implements AlignAble {
         if(edgeColor != null) showEdge = true;
         else edgeColor = new Vector4f(white);
 
-
-
         edges = new Line[]{new Line(edgeColor, zDepth),
                 new Line(edgeColor, zDepth),
                 new Line(edgeColor, zDepth),
                 new Line(edgeColor, zDepth)};
+
         this.fillQuad = fillQuad;
         regenerateEdges(thickness);
 

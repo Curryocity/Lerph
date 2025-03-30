@@ -51,7 +51,6 @@ public class MapSelectionScene extends Scene{
         goBack.setFrameInfo(4, 1f, UPPER,true, white, null);
         createNewMap.setFrameInfo(4, 1f, UPPER,true, white, null);
 
-
         bgPanel.addComponent(title, new Vector4f(0, 0.84f, 0.06f ,0.06f));
         bgPanel.addComponent(underLine, new Vector4f(0, 0.82f, 0.4f ,0f));
         bgPanel.addComponent(currentPage, new Vector4f(0, -0.86f, 0.045f ,0.045f));
@@ -66,8 +65,6 @@ public class MapSelectionScene extends Scene{
 
         refresh();
     }
-
-
 
     @Override
     public void refresh() {

@@ -9,12 +9,12 @@ import data.Space;
 import static core.Game.renderSystem;
 import static entity.EntityLoader.getEntitySheet;
 
-public class Portal extends Entity {
+public class Portal extends Entity implements Linkable{
 
     public static final String name = "portal";
     private int linkedID = -1;
-    AdvPacket portalPack;
-    AdvPacket shadowPack;
+    Portal linkedPortal = null;
+    AdvPacket portalPack, shadowPack;
 
     protected Portal(){}
 
@@ -90,4 +90,19 @@ public class Portal extends Entity {
         return new Sprite[]{portalSprite, shadowSprite};
     }
 
+    @Override
+    public void setLinkedObject(Linkable object, int id) {
+        linkedID = id;
+        linkedPortal = (Portal) object;
+    }
+
+    @Override
+    public Linkable getLinkedObject() {
+        return linkedPortal;
+    }
+
+    @Override
+    public int getLinkedID() {
+        return linkedID;
+    }
 }

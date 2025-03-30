@@ -92,10 +92,8 @@ public class AdvText implements AlignAble, Updatable{
     }
 
     public void setPos(float x, float y){
-        double deltaX = x - text.getX();
-        double deltaY = y - text.getY();
+        frame.movePos(x - text.getX(), y - text.getY());
         text.setPos(x,y);
-        frame.movePos(deltaX, deltaY);
     }
 
     public void setIdleColor(Vector4f idleColor){
@@ -140,7 +138,6 @@ public class AdvText implements AlignAble, Updatable{
             text.hide();
             frame.hide();
         }
-
     }
 
     public boolean getShown(){return shown;}
@@ -174,9 +171,13 @@ public class AdvText implements AlignAble, Updatable{
     }
 
     @Override
-    public void setPos(double x, double y) {setPos((float) x, (float) y);}
+    public void setPos(double x, double y) {
+        setPos((float) x, (float) y);
+    }
     @Override
-    public void setSize(double sizeX, double sizeY) {setFontSize((float) sizeY);}
+    public void setSize(double sizeX, double sizeY) {
+        setFontSize((float) sizeY);
+    }
     @Override
     public void show() {setShown(true);}
     @Override
@@ -184,7 +185,7 @@ public class AdvText implements AlignAble, Updatable{
     @Override
     public Vector4f getDimensionAndPivot() { return frame.getDimensionAndPivot();}
     @Override
-    public boolean isCoordsLocal() { return text.isCoordsLocal();}
+    public boolean isCoordsLocal() { return false;}
 
     @Override
     public void setRelativeToCamera(boolean isRelativeToCamera) {

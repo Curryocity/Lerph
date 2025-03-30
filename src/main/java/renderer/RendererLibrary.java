@@ -127,7 +127,7 @@ public class RendererLibrary {
             posY *= original_block_px;
         }
 
-        final float scaleFactor = Game.getScale(usedLocalCoords ? GAME_SCALE : REGULAR_SCALE);
+        final float scaleFactor = usedLocalCoords ? Game.getScale(GAME_SCALE) : 1;
 
         final float startX = (posX - anchorX * sizeX) * scaleFactor;
         final float startY = (posY - anchorY * sizeY) * scaleFactor;

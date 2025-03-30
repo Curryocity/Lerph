@@ -85,12 +85,12 @@ public class Game {
         currentScene.exit();
     }
 
-    public static final int BLOCK_SCALE = 0, GAME_SCALE = 1, REGULAR_SCALE = 2;
+    public static final int BLOCK_SCALE = 0, GAME_SCALE = 1, ONLY_ZOOM = 2;
     public static float getScale(int type){
         return switch (type) {
             case BLOCK_SCALE -> block_px * getCurrentScene().zoom;
             case GAME_SCALE -> scaleFactor * getCurrentScene().zoom;
-            case REGULAR_SCALE -> getCurrentScene().zoom;
+            case ONLY_ZOOM -> getCurrentScene().zoom;
             default -> throw new IllegalArgumentException("Unknown scale type");
         };
     }

@@ -60,7 +60,7 @@ public class LineRenderer {
         int index = 0;
         for (Line line : lines) {
 
-            float scale = line.usedLocalCoords ? Game.getScale(Game.BLOCK_SCALE) : Game.getScale(Game.REGULAR_SCALE);
+            float scale = line.usedLocalCoords ? Game.getScale(Game.BLOCK_SCALE) : 1;
 
             float offsetX = 0;
             float offsetY = 0;

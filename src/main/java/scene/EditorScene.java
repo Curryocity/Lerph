@@ -19,19 +19,24 @@ import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 import component.Line;
 import renderer.*;
+import ui_basic.AdvText;
+import ui_basic.Panel;
 import ui_basic.VisualBox;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static component.AdvPacket.GRADIENT_HORIZONTAL;
 import static core.Application.levelEditorImGui;
 import static core.Game.*;
 import static manager.MouseInput.LMB;
-import static ui_basic.ColorPalette.white;
+import static ui_basic.AdvText.UPPER;
+import static ui_basic.ColorPalette.*;
 
 public class EditorScene extends Scene{
 
+    Panel bgPanel = new Panel();
     final public static float defaultZoom = 0.4f, zoomSensitivity = 0.015f, cameraSpeed = 0.6f;
     final public static int cameraBound = 10;
 
@@ -41,6 +46,8 @@ public class EditorScene extends Scene{
 
     private int mouseX, mouseY;
     public boolean blockGridOn = true, chunkBorderOn = true;
+
+    AdvText linkButton = new AdvText("Link", black, limeGreen);
 
     public EditorScene(){
         map = Map.load("Default");
@@ -76,6 +83,12 @@ public class EditorScene extends Scene{
         }else {
             camera.setWorldPosition(setupX, setupY);
         }
+
+        linkButton.setFrameInfo(4, 1f, UPPER,true, black, null);
+        bgPanel.addComponent(linkButton, new Vector4f(0.85f, 0.82f, 0.04f ,0.04f));
+        bgPanel.setRelativeToCamera(true);
+        bgPanel.refresh();
+
         refresh();
     }
 
@@ -86,6 +99,7 @@ public class EditorScene extends Scene{
         renderSystem.chunkRenderer.syncScene(this);
         spawnCharacter.show();
         spawnShadow.show();
+        bgPanel.show();
     }
 
     double lastAlpha = 0;
@@ -96,17 +110,19 @@ public class EditorScene extends Scene{
             switchScene(new TitleScene());
         }
 
+        bgPanel.update();
+
         if(currentSpace() != null){
 
-            if(playQueue){
-                play();
-            }
+            if(playQueue) play();
+
+            guiProcessing();
 
             mouseX = (int) Math.floor(MouseInput.getMouseWorldCoords().x);
             mouseY = (int) Math.floor(MouseInput.getMouseWorldCoords().y);
 
             cameraMovement(alpha);
-            spawnPointStuffs();
+            spawnPointAndPlayTest();
             blockSelectAndPlacement();
             entityPlacement();
             entitySelection();
@@ -119,6 +135,23 @@ public class EditorScene extends Scene{
         imGui.render();
     }
 
+    @Override
+    public void exit() {
+        bgPanel.hide();
+        settingMode = NONE;
+        imGui.selectedBlock = -1;
+        imGui.selectedEntity = -1;
+        imGui.closeAllPopups();
+        renderSystem.reset();
+        saveCurrentMap();
+    }
+
+    @Override
+    public void handleResize() {
+        super.handleResize();
+        bgPanel.refresh();
+    }
+
     boolean playQueue = false;
     private void play(){
         settingMode = NONE;
@@ -126,6 +159,19 @@ public class EditorScene extends Scene{
         Game.switchScene(new InGameScene(map), false);
     }
 
+    private void guiProcessing(){
+
+        if(linkButton.useQueue(LMB)){
+            if(settingMode != LINKING){
+                settingMode = LINKING;
+                linkButton.setContent("Cancel");
+            }else{
+                settingMode = NONE;
+                linkButton.setContent("Link");
+            }
+        }
+
+    }
 
     public void setupCharacters(){
         spawnCharacter = new AdvPacket(player.idleAnimation[0], ChunkRenderer.floorZDepth + 0.01f);
@@ -273,52 +319,53 @@ public class EditorScene extends Scene{
     }
 
 
-    public final static int NONE = 0, SPAWNPOINT = 1, PLAYTEST = 2;
+    public final static int NONE = 0, SPAWNPOINT = 1, PLAYTEST = 2, LINKING = 3;
     public int settingMode = NONE;
     private AdvPacket spawnCharacter, spawnShadow;
     private AdvPacket spawnPreview, spawnPreviewShadow;
 
-    public void spawnPointStuffs(){
+    public void spawnPointAndPlayTest(){
         spawnCharacter.setPos(map.getCurrentSpace().getSpawnX(), map.getCurrentSpace().getSpawnY());
         spawnShadow.setPos(map.getCurrentSpace().getSpawnX(), map.getCurrentSpace().getSpawnY());
 
-        if(settingMode == NONE){
+        if(settingMode != SPAWNPOINT && settingMode != PLAYTEST || !mouseOnValidChunks()){
+            if (MouseInput.useQueue(LMB)) settingMode = NONE;
             spawnPreview.hide();
             spawnPreviewShadow.hide();
             return;
         }
 
-        if(mouseOnValidChunks()) {
-            spawnPreview.setPos(mouseX + 0.5f, mouseY + 0.5f);
-            spawnPreviewShadow.setPos(mouseX + 0.5f, mouseY + 0.5f);
-            spawnPreview.show();
-            spawnPreviewShadow.show();
+        spawnPreview.setPos(mouseX + 0.5f, mouseY + 0.5f);
+        spawnPreviewShadow.setPos(mouseX + 0.5f, mouseY + 0.5f);
+        spawnPreview.show();
+        spawnPreviewShadow.show();
 
-            if (MouseInput.useQueue(LMB)) {
-                if(settingMode == SPAWNPOINT) {
-                    if (currentSpace().setSpawnPoint(mouseX, mouseY)) {
-                        settingMode = NONE;
-                    } else {
-                        System.out.println("Invalid spawn point");
-                    }
-                }else if(settingMode == PLAYTEST){
-                    if(Block.isGround(currentSpace().getBlockID(mouseX, mouseY))){
-                        settingMode = NONE;
-                        Game.switchScene(new InGameScene(currentSpace(), mouseX + 0.5, mouseY + 0.5), false);
-                        System.out.println("Valid PlayTest Point");
-                    }else{
-                        System.out.println("Invalid PlayTest Point");
-                    }
-                }
-            }
-        }else {
-            if (MouseInput.useQueue(LMB)) {
+        if (!MouseInput.useQueue(LMB)) return;
+
+        if(settingMode == SPAWNPOINT) {
+            if (currentSpace().setSpawnPoint(mouseX, mouseY)) {
                 settingMode = NONE;
+            } else {
+                System.out.println("Invalid spawn point");
             }
-            spawnPreview.hide();
-            spawnPreviewShadow.hide();
+        }else if(settingMode == PLAYTEST){
+            if(Block.isGround(currentSpace().getBlockID(mouseX, mouseY))){
+                settingMode = NONE;
+                Game.switchScene(new InGameScene(currentSpace(), mouseX + 0.5, mouseY + 0.5), false);
+                System.out.println("Valid PlayTest Point");
+            }else{
+                System.out.println("Invalid PlayTest Point");
+            }
         }
 
+    }
+
+
+    public void linkingMode(){
+        if(settingMode != LINKING) return;
+        if(MouseInput.useQueue(LMB)){
+
+        }
     }
 
     public void generateGrid(int blockSpacing, Vector4f color, float width, float zDepth){
@@ -354,16 +401,6 @@ public class EditorScene extends Scene{
             gridLine.usedLocalCoords = true;
             LineRenderer.addImmediateLine(gridLine);
         }
-    }
-
-    @Override
-    public void exit() {
-        settingMode = NONE;
-        imGui.selectedBlock = -1;
-        imGui.selectedEntity = -1;
-        imGui.closeAllPopups();
-        renderSystem.reset();
-        saveCurrentMap();
     }
 
     public void scrolled(float amount){

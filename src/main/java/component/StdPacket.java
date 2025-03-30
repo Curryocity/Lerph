@@ -1,6 +1,5 @@
 package component;
 
-import core.Application;
 import core.Game;
 import org.joml.Vector4f;
 import ui_basic.AlignAble;
